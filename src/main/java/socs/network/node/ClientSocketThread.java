@@ -50,7 +50,7 @@ public class ClientSocketThread implements Runnable, Observer {
     public void update(Observable obj, Object arg) {
         // send request
         Request request = (Request) arg;
-        request.send(out, link, this); //send request
+        request.send(this); //send request
     }
 
     public void disconnect() {
@@ -69,11 +69,19 @@ public class ClientSocketThread implements Runnable, Observer {
         this.link = link;
     }
 
+    public Link getLink() {
+        return link;
+    }
+
+    public ObjectOutputStream getObjectOutputStream() {
+        return out;
+    }
+
     private void handleRequest() {
         // read incoming stream
         try {
             Request request = (Request) in.readObject();
-            request.process(out, link, request, this);
+            request.process(request, this);
         } catch (IOException ioe) {
             disconnect();
         }

@@ -46,7 +46,8 @@ public class SocketServerThread implements Runnable {
                 }
 
                 // Create new thread and start it
-                startNewClientThread(clientSocket);
+                ClientSocketThread clientSocketThread = new ClientSocketThread(clientSocket);
+                startNewClientThread(clientSocketThread);
             } catch (SocketException e) {
                 threadPool.shutdown();
             }
@@ -78,8 +79,7 @@ public class SocketServerThread implements Runnable {
         }
     }
 
-    public void startNewClientThread(Socket socket) {
-        ClientSocketThread clientSocketThread = new ClientSocketThread(socket);
+    public void startNewClientThread(ClientSocketThread clientSocketThread) {
         Router.getInstance().addObserver(clientSocketThread);
         threadPool.execute(clientSocketThread);
     }

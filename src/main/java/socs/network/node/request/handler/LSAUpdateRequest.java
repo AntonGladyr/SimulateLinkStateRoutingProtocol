@@ -8,10 +8,10 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
 public class LSAUpdateRequest implements Request {
-    public void send(ObjectOutputStream out, Link link, ClientSocketThread clientThread) {
+    public void send(ClientSocketThread clientThread) {
 
     }
-    public void process(ObjectOutputStream out, Link link, Request request, ClientSocketThread clientThread) {
+    public void process(Request request, ClientSocketThread clientThread) {
 
     }
 

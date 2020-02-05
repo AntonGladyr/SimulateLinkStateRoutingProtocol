@@ -2,9 +2,11 @@ package socs.network.node;
 
 import socs.network.node.request.handler.DisconnectRequest;
 import socs.network.node.request.handler.HelloRequest;
+import socs.network.node.request.handler.Request;
 import socs.network.util.Configuration;
 
 import java.io.*;
+import java.lang.reflect.Array;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -40,9 +42,9 @@ public class Router extends Observable {
     private RouterDescription rd = new RouterDescription();
 
     //assuming that all routers are with 4 ports
-    private ArrayList<Link> ports = new ArrayList<Link>();
+//    private ArrayList<Link> ports = new ArrayList<Link>();
 
-    private ArrayList<ClientSocketThread> clientThreads = new ArrayList<ClientSocketThread>();
+    private ArrayList<ClientSocketThread> ports = new ArrayList<ClientSocketThread>();
 
     public RouterDescription getRouterDescription() {
         return rd;
@@ -50,10 +52,6 @@ public class Router extends Observable {
 
     public void setRouterDescription(RouterDescription rd) {
         this.rd = rd;
-    }
-
-    public ArrayList<ClientSocketThread> getClientThreads() {
-        return clientThreads;
     }
 
     /**
@@ -73,8 +71,14 @@ public class Router extends Observable {
      *
      * @param portNumber the port number which the link attaches at
      */
-    private void processDisconnect(short portNumber) {
-
+    private void processDisconnect(int portNumber) {
+        for (ClientSocketThread port : ports) {
+            if (port.getLink().router2.processPortNumber == portNumber) {
+                Request request = new DisconnectRequest();
+                request.send(port); //send request
+                System.out.println("\tSuccessfully disconnected\n");
+            }
+        }
     }
 
     /**
@@ -88,21 +92,28 @@ public class Router extends Observable {
                                String simulatedIP, double weight) {
         //check if there is an empty port
         if (ports.size() == NUMBER_OF_PORTS) {
-            System.out.print("Sorry, there is no empty port. Try later... \n");
+            System.out.print("\tSorry, there is no empty port. Try later... \n");
             return;
         }
 
         RouterDescription destinationRouter = new RouterDescription();
+        RouterDescription srcRouter = new RouterDescription();
         destinationRouter.processIPAddress = processIP;
         destinationRouter.processPortNumber = processPort;
         destinationRouter.simulatedIPAddress = simulatedIP;
+        srcRouter.processIPAddress =  rd.getProcessIPAddress();
+        srcRouter.processPortNumber = rd.getProcessPortNumber();
+        srcRouter.simulatedIPAddress = rd.getSimulatedIPAddress();
 
-        Link link = new Link(this.rd, destinationRouter, weight);
+        Link link = new Link(srcRouter, destinationRouter, weight);
 
         //check if a new link already exists in the ports ArrayList
-        if (ports.contains(link)) {
-            System.out.print("Such link already exists. Try another destination router...\n");
-            return;
+
+        for (ClientSocketThread port: ports) {
+            if (port.getLink().equals(link)) {
+                System.out.print("\tSuch link already exists. Try another destination router...\n");
+                return;
+            }
         }
 
         // create socket for new link
@@ -110,13 +121,15 @@ public class Router extends Observable {
         try {
             Socket socket = new Socket(processIP, processPort);
             link.setSocket(socket);
-            ports.add(link);
-            SocketServerThread.getInstance().startNewClientThread(socket);
+            ClientSocketThread clientSocketThread = new ClientSocketThread(socket);
+            clientSocketThread.updateLink(link);
+            SocketServerThread.getInstance().startNewClientThread(clientSocketThread);
+            ports.add(clientSocketThread);
         } catch (UnknownHostException ex) {
-            System.out.println("Server not found: " + ex.getMessage());
+            System.out.println("\tServer not found: " + ex.getMessage());
 
         } catch (IOException ex) {
-            System.out.println("I/O error: " + ex.getMessage());
+            System.out.println("\tI/O error: " + ex.getMessage());
         }
     }
 
@@ -144,7 +157,14 @@ public class Router extends Observable {
      * output the neighbors of the routers
      */
     private void processNeighbors() {
-
+        String delimiter = new String(new char[90]).replace("\0", "-");;
+        System.out.println(delimiter);
+        for (int i = 0; i < ports.size(); i++) {
+            System.out.printf("\nIP Address of the neighbor %d: %s -> %d\n", i,
+                    ports.get(i).getLink().getRouter2().getSimulatedIPAddress(),
+                    ports.get(i).getLink().getRouter2().getProcessPortNumber());
+        }
+        System.out.println(delimiter);
     }
 
     /**
@@ -160,19 +180,19 @@ public class Router extends Observable {
      * add new port to the ArrayList<Link> ports
      */
 
-    public void addLink(Link link) {
+    public void addLink(ClientSocketThread link) {
         ports.add(link);
     }
 
     public void updateLink(Link link) {
-        int linkIndex = ports.indexOf(link);
-        Link testLink = ports.get(linkIndex);
-        System.out.println(testLink.getRouter1().status);
-        ports.set(linkIndex, link);
-        System.out.println(testLink.getRouter1().status);
+//        int linkIndex = ports.indexOf(link);
+//        Link testLink = ports.get(linkIndex);
+//        System.out.println(testLink.getRouter1().status);
+//        ports.set(linkIndex, link);
+//        System.out.println(testLink.getRouter1().status);
     }
 
-    public void deleteLink(Link link) {
+    public void deleteLink(ClientSocketThread link) {
         ports.remove(link);
     }
 
@@ -194,7 +214,7 @@ public class Router extends Observable {
             serverThread.start();
             isInitialized = true;
         } else {
-            System.out.print("\nThis router is already initialized.\n");
+            System.out.print("\n\tThis router is already initialized.\n");
             System.exit(1);
         }
     }
@@ -212,7 +232,7 @@ public class Router extends Observable {
                     processDetect(cmdLine[1]);
                 } else if (command.startsWith("disconnect ")) {
                     String[] cmdLine = command.split(" ");
-                    processDisconnect(Short.parseShort(cmdLine[1]));
+                    processDisconnect(Integer.parseInt(cmdLine[1]));
                 } else if (command.startsWith("quit")) {
                     processQuit();
                     break;

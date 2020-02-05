@@ -14,8 +14,9 @@ public class HelloRequest implements Request, Serializable {
     private SOSPFPacket packet;
 
     //method for sending requests
-    public void send(ObjectOutputStream out, Link link, ClientSocketThread clienThread) {
+    public void send(ClientSocketThread clientSocketThread) {
         //check if port already has TWO_WAY connection
+        Link link = clientSocketThread.getLink();
         if (link.getRouter1().getStatus() == RouterStatus.TWO_WAY &&
                 link.getRouter2().getStatus() == RouterStatus.TWO_WAY) {
 //            System.out.printf("%s => %s already has TWO_WAY connection...\n>> ",
@@ -30,25 +31,27 @@ public class HelloRequest implements Request, Serializable {
                 buildPacket(link);
 
                 //write to socket
-                System.out.printf("\n\tsend HELLO from %s to %s;\n\n",
+                System.out.printf("\n\tsend HELLO from %s to %s %s %s;\n\n",
                         Router.getInstance().getRouterDescription().getSimulatedIPAddress(),
-                        link.getRouter2().getSimulatedIPAddress());
-                out.writeObject(this);
-                out.flush();
+                        link.getRouter2().getSimulatedIPAddress(),link.getRouter1().getStatus(), link.getRouter2().getStatus());
+                clientSocketThread.getObjectOutputStream().writeObject(this);
+                clientSocketThread.getObjectOutputStream().flush();
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
-        clienThread.updateLink(link);
+        System.out.printf("\tsend %s %s\n", link.getRouter1().getStatus(), link.getRouter2().getStatus());
+        clientSocketThread.updateLink(link);
     }
 
     //method for handling received requests
-    public void process(ObjectOutputStream out, Link link, Request request, ClientSocketThread clientThread) {
+    public void process(Request request, ClientSocketThread clientSocketThread) {
+        Link link = clientSocketThread.getLink();
         try {
             //check if received packet is not HELLO packet
             if (request.getPacket().sospfType != SOSPFType.HELLO) {
                 System.out.println("Wrong packet type...\n");
-                clientThread.updateLink(link);
+                clientSocketThread.updateLink(link);
             }
 
             //if source router and destination router do not have INIT status
@@ -64,20 +67,19 @@ public class HelloRequest implements Request, Serializable {
                 link.getRouter2().setProcessIPAddress(request.getPacket().srcProcessIP);
                 link.getRouter2().setProcessPortNumber(request.getPacket().srcProcessPort);
                 link.getRouter2().setSimulatedIPAddress(request.getPacket().routerID);
-                Router.getInstance().addLink(link);
+                Router.getInstance().addLink(clientSocketThread);
                 buildPacket(link);
-                out.writeObject(this);
-                out.flush();
+                clientSocketThread.getObjectOutputStream().writeObject(this);
+                clientSocketThread.getObjectOutputStream().flush();
             }
             else if (link.getRouter1().getStatus() == RouterStatus.INIT && link.getRouter2().getStatus() == null) {
                 System.out.printf("\n\treceived HELLO from %s;\n", request.getPacket().neighborID);
                 System.out.printf("\n\tset %s state to TWO_WAY;\n", request.getPacket().neighborID);
                 link.getRouter1().setStatus(RouterStatus.TWO_WAY);
                 link.getRouter2().setStatus(RouterStatus.TWO_WAY);
-//                Router.getInstance().updateLink(link);
                 buildPacket(link);
-                out.writeObject(this);
-                out.flush();
+                clientSocketThread.getObjectOutputStream().writeObject(this);
+                clientSocketThread.getObjectOutputStream().flush();
                 //lsa update request
             }
             else if (link.getRouter1().getStatus() == RouterStatus.INIT &&
@@ -93,7 +95,7 @@ public class HelloRequest implements Request, Serializable {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        clientThread.updateLink(link);
+        clientSocketThread.updateLink(link);
     }
 
     public SOSPFPacket getPacket() {

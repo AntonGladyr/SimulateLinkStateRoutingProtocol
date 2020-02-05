@@ -9,9 +9,9 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
 public interface Request {
-    void send(ObjectOutputStream out, Link link, ClientSocketThread clientThread);
+    void send(ClientSocketThread clientThread);
 
-    void process(ObjectOutputStream out, Link link, Request request, ClientSocketThread clientThread);
+    void process(Request request, ClientSocketThread clientThread);
 
     SOSPFPacket getPacket();
 }

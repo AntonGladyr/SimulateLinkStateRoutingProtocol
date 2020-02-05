@@ -10,19 +10,19 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
 public class DisconnectRequest implements Request, Serializable {
-    public void send(ObjectOutputStream out, Link link, ClientSocketThread clientThread) {
+    public void send(ClientSocketThread clientSocketThread) {
         try {
-            out.writeObject(this);
-            out.flush();
-            Router.getInstance().deleteLink(link);
+            clientSocketThread.getObjectOutputStream().writeObject(this);
+            clientSocketThread.getObjectOutputStream().flush();
+            Router.getInstance().deleteLink(clientSocketThread);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public void process(ObjectOutputStream out, Link link, Request request, ClientSocketThread clientThread) {
+    public void process(Request request, ClientSocketThread clientThread) {
         try {
-            Router.getInstance().deleteLink(link);
+            Router.getInstance().deleteLink(clientThread);
             clientThread.disconnect();
         } catch (Exception e) {
             e.printStackTrace();

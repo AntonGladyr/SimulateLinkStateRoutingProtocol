@@ -46,6 +46,8 @@ public class RouterDescription {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         RouterDescription rd = (RouterDescription) o;
+        if (rd.processIPAddress == null || rd.processPortNumber == 0 || rd.simulatedIPAddress == null)
+            return false;
         return rd.processIPAddress.equals(processIPAddress) &&
                 rd.processPortNumber == processPortNumber &&
                 rd.simulatedIPAddress.equals(simulatedIPAddress);
