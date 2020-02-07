@@ -81,7 +81,7 @@ public class HelloRequest implements Request, Serializable {
             else if (link.getRouter1().getStatus() == RouterStatus.INIT &&
                     link.getRouter2().getStatus() == RouterStatus.INIT) {
                 System.out.printf("\n\treceived HELLO from %s;\n", request.getPacket().neighborID);
-                System.out.printf("\n\tset %s state to TWO_WAY;\n>>", request.getPacket().neighborID);
+                System.out.printf("\n\tset %s state to TWO_WAY;\n", request.getPacket().neighborID);
                 link.getRouter1().setStatus(RouterStatus.TWO_WAY);
                 link.getRouter2().setStatus(RouterStatus.TWO_WAY);
                 //lsa update request

@@ -6,7 +6,6 @@ import socs.network.node.request.handler.Request;
 import socs.network.util.Configuration;
 
 import java.io.*;
-import java.lang.reflect.Array;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -49,10 +48,6 @@ public class Router extends Observable {
 
     public RouterDescription getRouterDescription() {
         return rd;
-    }
-
-    public void setRouterDescription(RouterDescription rd) {
-        this.rd = rd;
     }
 
     /**
@@ -153,9 +148,16 @@ public class Router extends Observable {
      * <p/>
      * This command does trigger the link database synchronization
      */
-    private void processConnect(String processIP, short processPort,
-                                String simulatedIP, short weight) {
-
+    private void processConnect(String processIP, int processPort,
+                                String simulatedIP, double weight) {
+        System.out.printf("\n\tConnect to %s\n", simulatedIP);
+        processAttach(processIP, processPort, simulatedIP, weight);
+        for (ClientSocketThread port: ports) {
+            if (port.getLink().getRouter2().simulatedIPAddress.equals(simulatedIP)) {
+                port.connect();
+                return;
+            }
+        }
     }
 
     /**
@@ -187,14 +189,6 @@ public class Router extends Observable {
 
     public void addLink(ClientSocketThread link) {
         ports.add(link);
-    }
-
-    public void updateLink(Link link) {
-//        int linkIndex = ports.indexOf(link);
-//        Link testLink = ports.get(linkIndex);
-//        System.out.println(testLink.getRouter1().status);
-//        ports.set(linkIndex, link);
-//        System.out.println(testLink.getRouter1().status);
     }
 
     public void deleteLink(ClientSocketThread link) {
@@ -248,10 +242,10 @@ public class Router extends Observable {
                             cmdLine[3], Double.parseDouble(cmdLine[4]));
                 } else if (command.equals("start")) {
                     processStart();
-                } else if (command.equals("connect ")) {
+                } else if (command.startsWith("connect ")) {
                     String[] cmdLine = command.split(" ");
-                    processConnect(cmdLine[1], Short.parseShort(cmdLine[2]),
-                            cmdLine[3], Short.parseShort(cmdLine[4]));
+                    processConnect(cmdLine[1], Integer.parseInt(cmdLine[2]),
+                            cmdLine[3], Double.parseDouble(cmdLine[4]));
                 } else if (command.equals("neighbors")) {
                     //output neighbors
                     processNeighbors();

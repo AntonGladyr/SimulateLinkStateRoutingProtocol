@@ -1,6 +1,7 @@
 package socs.network.node;
 
 import org.omg.PortableInterceptor.SYSTEM_EXCEPTION;
+import socs.network.node.request.handler.HelloRequest;
 import socs.network.node.request.handler.Request;
 
 import java.io.*;
@@ -50,6 +51,11 @@ public class ClientSocketThread implements Runnable, Observer {
     public void update(Observable obj, Object arg) {
         // send request
         Request request = (Request) arg;
+        request.send(this); //send request
+    }
+
+    public void connect() {
+        HelloRequest request = new HelloRequest();
         request.send(this); //send request
     }
 
