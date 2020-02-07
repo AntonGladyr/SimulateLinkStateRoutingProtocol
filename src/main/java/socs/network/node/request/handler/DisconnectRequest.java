@@ -2,11 +2,9 @@ package socs.network.node.request.handler;
 
 import socs.network.message.SOSPFPacket;
 import socs.network.node.ClientSocketThread;
-import socs.network.node.Link;
 import socs.network.node.Router;
 
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
 public class DisconnectRequest implements Request, Serializable {

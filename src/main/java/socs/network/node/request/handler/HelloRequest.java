@@ -6,7 +6,6 @@ import socs.network.node.ClientSocketThread;
 import socs.network.node.Link;
 import socs.network.node.Router;
 import socs.network.node.RouterStatus;
-import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
 //This class handles HELLO requests

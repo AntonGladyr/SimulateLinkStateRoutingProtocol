@@ -1,6 +1,5 @@
 package socs.network.node;
 
-import org.omg.PortableInterceptor.SYSTEM_EXCEPTION;
 import socs.network.node.request.handler.HelloRequest;
 import socs.network.node.request.handler.Request;
 
@@ -45,7 +44,6 @@ public class ClientSocketThread implements Runnable, Observer {
         while (isActiveSocket) {
             handleRequest();
         }
-        //Router.getInstance().deleteLink(clientSocket);
     }
 
     public void update(Observable obj, Object arg) {
@@ -71,7 +69,7 @@ public class ClientSocketThread implements Runnable, Observer {
         }
     }
 
-    public void updateLink(Link link){
+    public void updateLink(Link link) {
         this.link = link;
     }
 
@@ -90,8 +88,7 @@ public class ClientSocketThread implements Runnable, Observer {
             request.process(request, this);
         } catch (IOException ioe) {
             disconnect();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             disconnect();
             e.printStackTrace();
         }

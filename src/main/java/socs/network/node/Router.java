@@ -137,6 +137,7 @@ public class Router extends Observable {
      * broadcast Hello to neighbors
      */
     private void processStart() {
+        //Pass HelloRequest to all subscribers
         setChanged();
         notifyObservers(new HelloRequest());
     }
@@ -178,6 +179,7 @@ public class Router extends Observable {
      * disconnect with all neighbors and quit the program
      */
     private void processQuit() {
+        // Pass DisconnectRequest to all subscribers
         setChanged();
         notifyObservers(new DisconnectRequest());
         SocketServerThread.getInstance().stopSocketServer();
