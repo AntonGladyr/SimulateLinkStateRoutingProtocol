@@ -10,6 +10,7 @@ import java.lang.reflect.Array;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Observable;
 
 
@@ -72,10 +73,14 @@ public class Router extends Observable {
      * @param portNumber the port number which the link attaches at
      */
     private void processDisconnect(int portNumber) {
-        for (ClientSocketThread port : ports) {
+        // To avoid java.util.ConcurrentModificationException, use the remove() method on the iterator itself
+        for (Iterator<ClientSocketThread> iterator = ports.iterator(); iterator.hasNext();) {
+            ClientSocketThread port = iterator.next();
             if (port.getLink().router2.processPortNumber == portNumber) {
                 Request request = new DisconnectRequest();
                 request.send(port); //send request
+                iterator.remove();
+                deleteObserver(port);
                 System.out.println("\tSuccessfully disconnected\n");
             }
         }
@@ -194,6 +199,7 @@ public class Router extends Observable {
 
     public void deleteLink(ClientSocketThread link) {
         ports.remove(link);
+        deleteObserver(link);
     }
 
     /**
@@ -254,7 +260,7 @@ public class Router extends Observable {
                     break;
                 }
                 System.out.print(">> ");
-                command = br.readLine();
+                command = br.readLine().trim();
             }
             isReader.close();
             br.close();

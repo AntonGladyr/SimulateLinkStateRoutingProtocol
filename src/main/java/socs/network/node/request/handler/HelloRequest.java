@@ -19,9 +19,6 @@ public class HelloRequest implements Request, Serializable {
         Link link = clientSocketThread.getLink();
         if (link.getRouter1().getStatus() == RouterStatus.TWO_WAY &&
                 link.getRouter2().getStatus() == RouterStatus.TWO_WAY) {
-//            System.out.printf("%s => %s already has TWO_WAY connection...\n>> ",
-//                    link.getRouter1().getSimulatedIPAddress(),
-//                    link.getRouter2().getSimulatedIPAddress());
             System.out.println("LSAUpdate");
         } else {
             try {
@@ -31,16 +28,15 @@ public class HelloRequest implements Request, Serializable {
                 buildPacket(link);
 
                 //write to socket
-                System.out.printf("\n\tsend HELLO from %s to %s %s %s;\n\n",
+                System.out.printf("\n\tsend HELLO from %s to %s;\n\n",
                         Router.getInstance().getRouterDescription().getSimulatedIPAddress(),
-                        link.getRouter2().getSimulatedIPAddress(),link.getRouter1().getStatus(), link.getRouter2().getStatus());
+                        link.getRouter2().getSimulatedIPAddress());
                 clientSocketThread.getObjectOutputStream().writeObject(this);
                 clientSocketThread.getObjectOutputStream().flush();
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
-        System.out.printf("\tsend %s %s\n", link.getRouter1().getStatus(), link.getRouter2().getStatus());
         clientSocketThread.updateLink(link);
     }
 
@@ -88,7 +84,6 @@ public class HelloRequest implements Request, Serializable {
                 System.out.printf("\n\tset %s state to TWO_WAY;\n>>", request.getPacket().neighborID);
                 link.getRouter1().setStatus(RouterStatus.TWO_WAY);
                 link.getRouter2().setStatus(RouterStatus.TWO_WAY);
-//                Router.getInstance().updateLink(link);
                 //lsa update request
             }
 

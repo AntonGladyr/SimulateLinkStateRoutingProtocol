@@ -14,7 +14,7 @@ public class DisconnectRequest implements Request, Serializable {
         try {
             clientSocketThread.getObjectOutputStream().writeObject(this);
             clientSocketThread.getObjectOutputStream().flush();
-            Router.getInstance().deleteLink(clientSocketThread);
+            clientSocketThread.disconnect();
         } catch (IOException e) {
             e.printStackTrace();
         }
