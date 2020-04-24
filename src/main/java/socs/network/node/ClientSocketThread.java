@@ -1,6 +1,7 @@
 package socs.network.node;
 
 import socs.network.node.request.handler.HelloRequest;
+import socs.network.node.request.handler.LSAUpdateRequest;
 import socs.network.node.request.handler.Request;
 
 import java.io.*;
@@ -21,7 +22,7 @@ public class ClientSocketThread implements Runnable, Observer {
     public ClientSocketThread(Socket clientSocket) {
         socket = clientSocket;
         // create new Link and add to the <ports> list
-        link = new Link(new RouterDescription(), new RouterDescription(), 999999999, clientSocket);
+        link = new Link(new RouterDescription(), new RouterDescription(), Integer.MAX_VALUE, clientSocket);
         // create input and output streams
         try {
             out = new ObjectOutputStream(link.getSocket().getOutputStream());
@@ -55,6 +56,11 @@ public class ClientSocketThread implements Runnable, Observer {
     public void connect() {
         HelloRequest request = new HelloRequest();
         request.send(this); //send request
+    }
+
+    public void lsaUpdate() {
+        LSAUpdateRequest lsaUpdateRequest = new LSAUpdateRequest();
+        lsaUpdateRequest.send(this); //send LSAupdate request
     }
 
     public void disconnect() {

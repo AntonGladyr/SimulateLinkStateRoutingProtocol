@@ -38,6 +38,10 @@ public class Link {
         return router2;
     }
 
+    public double getWeight() { return weight; }
+
+    public void setWeight(double weight) { this.weight = weight; }
+
     public void setRouter1(RouterDescription description) {
         router1 = description;
     }

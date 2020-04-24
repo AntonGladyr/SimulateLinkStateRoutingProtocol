@@ -7,6 +7,7 @@ public class LSA implements Serializable {
 
     //IP address of the router originate this LSA
     public String linkStateID;
+    public double distance = Double.MAX_VALUE;
     public int lsaSeqNumber = Integer.MIN_VALUE;
 
     public LinkedList<LinkDescription> links = new LinkedList<LinkDescription>();

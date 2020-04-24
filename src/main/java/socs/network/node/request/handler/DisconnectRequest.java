@@ -22,6 +22,11 @@ public class DisconnectRequest implements Request, Serializable {
         try {
             Router.getInstance().deleteLink(clientThread);
             clientThread.disconnect();
+            // create new link state advertise (LSA)
+            // and update the database
+            Router.getInstance().createLSA();
+            //lsa update broadcast
+            Router.getInstance().lsaUpdateBroadcast();
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("public void process() exception");

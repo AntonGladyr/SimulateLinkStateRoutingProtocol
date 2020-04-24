@@ -2,15 +2,20 @@ package socs.network.node;
 
 import socs.network.node.request.handler.DisconnectRequest;
 import socs.network.node.request.handler.HelloRequest;
+import socs.network.node.request.handler.LSAUpdateRequest;
 import socs.network.node.request.handler.Request;
 import socs.network.util.Configuration;
+import socs.network.message.LinkDescription;
+import socs.network.message.LSA;
 
 import java.io.*;
+import java.util.Vector;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Observable;
+import java.util.LinkedList;
 
 
 public class Router extends Observable {
@@ -46,6 +51,8 @@ public class Router extends Observable {
 
     private ArrayList<ClientSocketThread> ports = new ArrayList<ClientSocketThread>();
 
+    private int lsaSeqNumber = Integer.MIN_VALUE;
+
     public RouterDescription getRouterDescription() {
         return rd;
     }
@@ -58,7 +65,8 @@ public class Router extends Observable {
      * @param destinationIP the ip adderss of the destination simulated router
      */
     private void processDetect(String destinationIP) {
-
+        String result = lsd.getShortestPath(destinationIP);
+        System.out.println(result);
     }
 
     /**
@@ -76,7 +84,13 @@ public class Router extends Observable {
                 request.send(port); //send request
                 iterator.remove();
                 deleteObserver(port);
+                // create new link state advertise (LSA)
+                // and update the database
+                createLSA();
+                //lsa update broadcast
+                lsaUpdateBroadcast();
                 System.out.println("\tSuccessfully disconnected\n");
+                break;
             }
         }
     }
@@ -137,7 +151,13 @@ public class Router extends Observable {
      * broadcast Hello to neighbors
      */
     private void processStart() {
-        //Pass HelloRequest to all subscribers
+        // check if port connections exist
+        if (ports.isEmpty()) {
+            System.out.println("\tNo connection established.");
+            return;
+        }
+
+        //Pass HelloRequest to the all subscribers
         setChanged();
         notifyObservers(new HelloRequest());
     }
@@ -156,7 +176,14 @@ public class Router extends Observable {
         for (ClientSocketThread port: ports) {
             if (port.getLink().getRouter2().simulatedIPAddress.equals(simulatedIP)) {
                 port.connect();
-                return;
+            }
+        }
+
+        //lsa update
+        for (ClientSocketThread port: ports) {
+            if (!port.getLink().getRouter2().simulatedIPAddress.equals(simulatedIP)) {
+                port.lsaUpdate();
+                System.out.printf("\n\tlsaSeqNumber %d\n", lsaSeqNumber);
             }
         }
     }
@@ -168,11 +195,13 @@ public class Router extends Observable {
         String delimiter = new String(new char[90]).replace("\0", "-");;
         System.out.println(delimiter);
         for (int i = 0; i < ports.size(); i++) {
-            System.out.printf("\nIP Address of the neighbor %d: %s -> %d\n", i,
+            System.out.printf("\n[Local Address] -> [Remote Address]:[port] : %s -> %s:%d\n",
+                    ports.get(i).getLink().getRouter1().getSimulatedIPAddress(),
                     ports.get(i).getLink().getRouter2().getSimulatedIPAddress(),
                     ports.get(i).getLink().getRouter2().getProcessPortNumber());
         }
         System.out.println(delimiter);
+        System.out.println(lsd.toString());
     }
 
     /**
@@ -183,6 +212,18 @@ public class Router extends Observable {
         setChanged();
         notifyObservers(new DisconnectRequest());
         SocketServerThread.getInstance().stopSocketServer();
+    }
+
+    public void lsaUpdateBroadcast() {
+        // check if port connections exist
+        if (ports.isEmpty()) {
+            System.out.println("\tNo connection established.");
+            return;
+        }
+
+        //Pass LSAUpdate to all subscribers
+        setChanged();
+        notifyObservers(new LSAUpdateRequest());
     }
 
     /**
@@ -221,6 +262,59 @@ public class Router extends Observable {
         }
     }
 
+    public LinkedList<LinkDescription> getLinkDescriptionList() {
+        LinkedList<LinkDescription> links = new LinkedList<LinkDescription>();
+        for (ClientSocketThread port: ports) {
+            LinkDescription linkDescription = new LinkDescription();
+            linkDescription.linkID = port.getLink().getRouter2().simulatedIPAddress;
+            linkDescription.tosMetrics = port.getLink().getWeight();
+            linkDescription.portNum = port.getLink().getRouter2().processPortNumber;
+            links.add(linkDescription);
+        }
+        return links;
+    }
+
+    public int getLSASeqNumber() {
+        return lsaSeqNumber;
+    }
+
+    public ArrayList<ClientSocketThread> getPorts() {
+        return ports;
+    }
+
+    public void createLSA() {
+        Vector<LSA> lsaArray = new Vector<LSA>();
+        LSA lsa = new LSA();
+        lsaSeqNumber++; // increment lsa sequence number
+        lsa.lsaSeqNumber = lsaSeqNumber;
+        lsa.linkStateID = rd.getSimulatedIPAddress(); // routerDescription->simulatedIPAddress
+        lsa.links = getLinkDescriptionList();
+        lsaArray.add(lsa);
+        //update database
+        udpateLinkStateDatabase(lsaArray);
+    }
+
+    public void udpateLinkStateDatabase(Vector<LSA> lsaArray) {
+        for(LSA lsa : lsaArray) {
+//             if lsa.links is empty, delete the record in the database
+            if (lsa.links.isEmpty() && lsd._store.containsKey(lsa.linkStateID)) {
+                lsd._store.remove(lsa.linkStateID);
+            }
+            // checks if it has already stored a copy of an LSP
+            if (!lsd._store.containsKey(lsa.linkStateID)) {
+                lsd._store.put(lsa.linkStateID, lsa);
+            }
+
+            //if found lsa and new sequence number greater than the old one => update LSA
+            if (lsd._store.containsKey(lsa.linkStateID) && lsd._store.get(lsa.linkStateID).lsaSeqNumber < lsa.lsaSeqNumber) {
+                lsd._store.replace(lsa.linkStateID, lsa);
+            }
+        }
+    }
+
+    public LinkStateDatabase getLinkStateDatabase() {
+        return lsd;
+    }
 
     public void terminal() {
         try {
