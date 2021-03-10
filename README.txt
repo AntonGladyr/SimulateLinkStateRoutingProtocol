@@ -1,5 +1,4 @@
-This project is a program which simulates the major functionalities of a routing device running a simplified Link State Routing protocol. Each program instance
-represents a router or host in the simulated network space; Correspondingly, the links connecting the routers/hosts and the IP addresses identifying the routers/hosts are simulated by the in-memory data structures. For more details, see PA_COMP_535.pdf.
+This project is a program which simulates the major functionalities of a routing device running a simplified Link State Routing protocol. Each program instance represents a router or host in the simulated network space; Correspondingly, the links connecting the routers/hosts and the IP addresses identifying the routers/hosts are simulated by the in-memory data structures. For more details, see PA_COMP_535.pdf.
 
 Usage:
 
