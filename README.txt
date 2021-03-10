@@ -21,7 +21,7 @@
 3. Show neighbors and LinkStateDatabase of the router4:
     - neighbors
 
-4. Find shortest path from the router1 to the router4:
+4. Find shortest path from the router4 to the router1:
     - detect 192.168.3.1
 
 =========================================================================================================

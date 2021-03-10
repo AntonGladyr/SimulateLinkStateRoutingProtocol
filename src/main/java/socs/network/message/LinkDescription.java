@@ -10,4 +10,10 @@ public class LinkDescription implements Serializable {
     public String toString() {
         return linkID + "," + portNum + "," + tosMetrics;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        LinkDescription link = (LinkDescription)obj;
+        return linkID.equals(link.linkID);
+    }
 }
